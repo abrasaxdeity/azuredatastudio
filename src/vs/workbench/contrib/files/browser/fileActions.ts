@@ -17,7 +17,7 @@ import { dispose, IDisposable } from 'vs/base/common/lifecycle';
 import { VIEWLET_ID, IExplorerService } from 'vs/workbench/contrib/files/common/files';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { IFileService, AutoSaveConfiguration } from 'vs/platform/files/common/files';
-import { toResource, IUntitledResourceInput, ITextEditor } from 'vs/workbench/common/editor';
+import { toResource, ITextEditor } from 'vs/workbench/common/editor';
 import { ExplorerViewlet } from 'vs/workbench/contrib/files/browser/explorerViewlet';
 import { IUntitledEditorService } from 'vs/workbench/services/untitled/common/untitledEditorService';
 import { IQuickOpenService } from 'vs/platform/quickOpen/common/quickOpen';
@@ -341,7 +341,7 @@ class BaseDeleteFileAction extends BaseErrorReportingAction {
 
 			// Check if we need to ask for confirmation at all
 			if (this.skipConfirm || (this.useTrash && this.configurationService.getValue<boolean>(BaseDeleteFileAction.CONFIRM_DELETE_SETTING_KEY) === false)) {
-				confirmDeletePromise = Promise.resolve({ confirmed: true } as IConfirmationResult);
+				confirmDeletePromise = Promise.resolve({ confirmed: true });
 			}
 
 			// Confirm for moving to trash
@@ -503,7 +503,7 @@ class PasteFileAction extends BaseErrorReportingAction {
 			throw new Error(nls.localize('fileIsAncestor', "File to paste is an ancestor of the destination folder"));
 		}
 
-		return this.fileService.resolveFile(fileToPaste).then(fileToPasteStat => {
+		return this.fileService.resolve(fileToPaste).then(fileToPasteStat => {
 
 			// Find target
 			let target: ExplorerItem;
@@ -516,7 +516,7 @@ class PasteFileAction extends BaseErrorReportingAction {
 			const targetFile = findValidPasteFileTarget(target, { resource: fileToPaste, isDirectory: fileToPasteStat.isDirectory, allowOverwirte: pasteShouldMove });
 
 			// Copy File
-			const promise = pasteShouldMove ? this.fileService.moveFile(fileToPaste, targetFile) : this.fileService.copyFile(fileToPaste, targetFile);
+			const promise = pasteShouldMove ? this.fileService.move(fileToPaste, targetFile) : this.fileService.copy(fileToPaste, targetFile);
 			return promise.then<ITextEditor | undefined>(stat => {
 				if (pasteShouldMove) {
 					// Cut is done. Make sure to clear cut state.

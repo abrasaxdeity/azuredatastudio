@@ -4,14 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { mkdir, open, close, read, write } from 'fs';
-import { tmpdir } from 'os';
 import { promisify } from 'util';
 import { IDisposable, Disposable } from 'vs/base/common/lifecycle';
 import { IFileSystemProvider, FileSystemProviderCapabilities, IFileChange, IWatchOptions, IStat, FileType, FileDeleteOptions, FileOverwriteOptions, FileWriteOptions, FileOpenOptions, FileSystemProviderErrorCode, createFileSystemProviderError, FileSystemProviderError } from 'vs/platform/files/common/files';
 import { URI } from 'vs/base/common/uri';
 import { Event, Emitter } from 'vs/base/common/event';
 import { isLinux, isWindows } from 'vs/base/common/platform';
-import { statLink, readdir, unlink, del, move, copy, readFile, writeFile, fileExists, truncate } from 'vs/base/node/pfs';
+import { statLink, readdir, unlink, move, copy, readFile, writeFile, fileExists, truncate, rimraf, RimRafMode } from 'vs/base/node/pfs';
 import { normalize, basename, dirname } from 'vs/base/common/path';
 import { joinPath } from 'vs/base/common/resources';
 import { isEqual } from 'vs/base/common/extpath';
@@ -65,7 +64,7 @@ export class DiskFileSystemProvider extends Disposable implements IFileSystemPro
 				ctime: stat.ctime.getTime(),
 				mtime: stat.mtime.getTime(),
 				size: stat.size
-			} as IStat;
+			};
 		} catch (error) {
 			throw this.toFileSystemProviderError(error);
 		}
@@ -225,17 +224,13 @@ export class DiskFileSystemProvider extends Disposable implements IFileSystemPro
 
 			await this.doDelete(filePath, opts);
 		} catch (error) {
-			if (error.code === 'ENOENT') {
-				return Promise.resolve(); // tolerate that the file might not exist
-			}
-
 			throw this.toFileSystemProviderError(error);
 		}
 	}
 
 	protected async doDelete(filePath: string, opts: FileDeleteOptions): Promise<void> {
 		if (opts.recursive) {
-			await del(filePath, tmpdir());
+			await rimraf(filePath, RimRafMode.MOVE);
 		} else {
 			await unlink(filePath);
 		}
